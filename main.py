@@ -103,7 +103,12 @@ def draw_net(disp):
 
 
 def draw_temp(disp):
-    cpu_temp = get_temp(os.path.join(cpu_hwmon_path, "temp1_input"))
+    cpu_temp_file = os.path.join(cpu_hwmon_path, "temp1_input") if cpu_hwmon_path else None
+    if cpu_temp_file and os.path.exists(cpu_temp_file):
+        cpu_temp_str = format(get_temp(cpu_temp_file) / 1000, '.1f')
+    else:
+        cpu_temp_str = "err"
+
     if lm75_hwmon_path:
         temp_hwmon_file = os.path.join(lm75_hwmon_path, "temp1_input")
         if os.path.exists(temp_hwmon_file):
@@ -113,7 +118,6 @@ def draw_temp(disp):
             board_temp = "err"
     else:
         board_temp = "err"
-    cpu_temp_str = format(cpu_temp/1000,'.1f')
     if temperature_info["cpu"] != cpu_temp_str:
         temperature_info["cpu"] = cpu_temp_str
         disp.fill_rect((0,0,0), x=GRID_POSITIONS[1]+44, y=ROW_POSITIONS[3]+1, w=GRID_POSITIONS[2]-GRID_POSITIONS[1]-44, h=20)   
@@ -125,13 +129,13 @@ def draw_temp(disp):
 
 
 def draw_power(disp):
-    pw_file = os.path.join(ina226_hwmon_path, 'power1_input')
+    pw_file = os.path.join(ina226_hwmon_path, 'power1_input') if ina226_hwmon_path else None
     if os.path.exists(pw_file):
         pw_val = get_temp(pw_file)
         pw = format(pw_val/1000000, '.1f')
     else:
         pw = "err"
-    vol_file = os.path.join(ina226_hwmon_path, 'in1_input')
+    vol_file = os.path.join(ina226_hwmon_path, 'in1_input') if ina226_hwmon_path else None
     if os.path.exists(vol_file):
         vol_val = get_temp(vol_file)
         vol = format(vol_val/1000, '.1f')
@@ -216,6 +220,8 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, handle_shutdown)
     try:
         main()
+    except Exception as e:
+        print(f"发生错误: {e}", file=sys.stderr)
     finally:
         cleanup_display()
         sys.exit(0)
