@@ -116,7 +116,7 @@ class ST7789(object):
         height=240,
         rotation=90,
         invert=True,
-        spi_speed_hz=4000000,
+        spi_speed_hz=20000000,
         offset_left=0,
         offset_top=0,
     ):
@@ -164,6 +164,8 @@ class ST7789(object):
 
         # Set DC as output.
         self._dc = gpiodevice.get_pin(dc, "st7789-dc", OUTL)
+        self._bl = None
+        self._rst = None
 
         # Setup backlight as output (if provided).
         if backlight is not None:
@@ -228,7 +230,7 @@ class ST7789(object):
         self.send(data, True)
 
     def reset(self):
-        """Reset the display, if reset pin is connected."""
+        """Reset the display using the hardware pin or software reset."""
         if self._rst is not None:
             self.set_pin(self._rst, True)
             time.sleep(0.500)
@@ -236,6 +238,15 @@ class ST7789(object):
             time.sleep(0.500)
             self.set_pin(self._rst, True)
             time.sleep(0.500)
+        else:
+            self.soft_reset()
+
+    def soft_reset(self):
+        """Reset the ST7789 through its software reset command."""
+        self.command(ST7789_SWRESET)
+        # The controller needs time to complete the reset before receiving
+        # another command.
+        time.sleep(0.150)
 
     def _init(self):
         # Initialize the display.

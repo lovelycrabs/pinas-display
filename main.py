@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import sys
+import signal
 
 import time
 import st7789
@@ -17,6 +18,10 @@ COLOR_GREEN = (119, 255, 193)
 COLOR_PURPLE = (236, 97, 254)
 GRID_COLOR = (64, 64, 64)
 SUB_FONT_SIZE = 16
+
+shutdown_requested = False
+display = None
+
 
 hwmon_base_path = "/sys/class/hwmon"
 
@@ -170,31 +175,47 @@ def draw_background(disp):
 
     disp.text("网络", 0, ROW_POSITIONS[5]+3, font_size=SUB_FONT_SIZE, color=SUB_FONT_COLOR)
 
-disp = st7789.ST7789(
-    height=135,
-    width=240,
-    rotation=0,
-    **DISPLAY_CONFIG,
-    spi_speed_hz=8000000,
-    offset_left=40,
-    offset_top=53,
-)
+def handle_shutdown(signum, frame):
+    """仅记录退出请求，避免在信号处理器中执行阻塞的 SPI 操作。"""
+    global shutdown_requested
+    shutdown_requested = True
 
 
-# Initialize display.
-disp.begin()
-#disp.reset()
-draw_background(disp)
+def cleanup_display():
+    """在主线程中清屏并关闭背光。"""
+    if display is not None:
+        try:
+            display.fill_rect((0, 0, 0), 0, 0)
+            display.set_backlight(False)
+        except Exception as exc:
+            print(f"清理显示屏失败: {exc}", file=sys.stderr)
 
-while(True):
-    draw_cpuinfo(disp)
-    draw_mem(disp)
-    draw_temp(disp)
-    draw_power(disp)
-    draw_net(disp)
-    #draw_net(disp,0,0,WIDTH, 40, 16)
-    #draw_power(disp,0, 115, WIDTH, 20, 20)
-    #draw_cpuinfo(disp,0,44,WIDTH, 20, 20)
-    #draw_mem(disp,0, 64, WIDTH, 20, 20)
-    #draw_temp(disp, 0, 84,WIDTH, 20, 20)
-    time.sleep(1)
+def main():
+    global display
+    display = st7789.ST7789(
+        height=135,
+        width=240,
+        rotation=0,
+        **DISPLAY_CONFIG,
+        offset_left=40,
+        offset_top=53,
+    )
+
+    display.begin()
+    draw_background(display)
+    while not shutdown_requested:
+        draw_cpuinfo(display)
+        draw_mem(display)
+        draw_temp(display)
+        draw_power(display)
+        draw_net(display)
+        time.sleep(1)
+
+if __name__ == "__main__":
+    signal.signal(signal.SIGTERM, handle_shutdown)
+    signal.signal(signal.SIGINT, handle_shutdown)
+    try:
+        main()
+    finally:
+        cleanup_display()
+        sys.exit(0)

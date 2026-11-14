@@ -5,6 +5,8 @@ Description=st7789 spi led display
 WorkingDirectory=/usr/local/pinas-display
 ExecStart=/usr/local/pinas-display/venv/bin/python main.py
 Restart=always
+RestartSec=1
+TimeoutStopSec=3
 User=root
 Group=root
 
