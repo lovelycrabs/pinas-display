@@ -111,7 +111,7 @@ def draw_temp(disp):
 
     if lm75_hwmon_path:
         temp_hwmon_file = os.path.join(lm75_hwmon_path, "temp1_input")
-        if os.path.exists(temp_hwmon_file):
+        if temp_hwmon_file and os.path.exists(temp_hwmon_file):
             temp_value = get_temp(temp_hwmon_file)
             board_temp = format(temp_value/1000,'.1f')
         else:
@@ -130,13 +130,13 @@ def draw_temp(disp):
 
 def draw_power(disp):
     pw_file = os.path.join(ina226_hwmon_path, 'power1_input') if ina226_hwmon_path else None
-    if os.path.exists(pw_file):
+    if pw_file and os.path.exists(pw_file):
         pw_val = get_temp(pw_file)
         pw = format(pw_val/1000000, '.1f')
     else:
         pw = "err"
     vol_file = os.path.join(ina226_hwmon_path, 'in1_input') if ina226_hwmon_path else None
-    if os.path.exists(vol_file):
+    if vol_file and os.path.exists(vol_file):
         vol_val = get_temp(vol_file)
         vol = format(vol_val/1000, '.1f')
     else:

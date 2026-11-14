@@ -48,7 +48,7 @@ fi
 cp -f "$config_file" "${disp_dir}/config.py"
 echo ${disp_dir}
 #cp -rf ${cur_dir} /usr/local
-apt install -y python3 python3-dev
+apt install -y python3 python3-pip python3-venv python3-dev
 
 python3 -m venv ${disp_dir}/venv
 ${disp_dir}/venv/bin/pip install -r ${disp_dir}/requirements.txt -i https://mirrors.aliyun.com/pypi/simple
