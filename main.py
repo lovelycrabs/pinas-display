@@ -11,8 +11,8 @@ from config import DISPLAY_CONFIG, TITLE
 
 ROW_POSITIONS = [0, 24, 46, 68, 90, 112]
 GRID_POSITIONS = [0, 40, 140, 172]
-TITLE_FONT_COLOR = (255, 255, 255)
-SUB_FONT_COLOR = (240, 240, 240)
+TITLE_FONT_COLOR = (240,240,240)
+SUB_FONT_COLOR = (220, 220, 220)
 COLOR_BLUE = (147, 208, 253)
 COLOR_GREEN = (119, 255, 193)
 COLOR_PURPLE = (236, 97, 254)
@@ -94,7 +94,7 @@ def draw_net(disp):
     for name, addrs in interfaces.items():
         if name == "lo":
             continue
-        new_addresses = "{0}:{1}".format(name, addrs[0].address)
+        new_addresses = "{0}:{1}".format(len(name)>5 and name[:4]+'*' or name, addrs[0].address)
         break
     if new_addresses != int_addresses:
         int_addresses = new_addresses
