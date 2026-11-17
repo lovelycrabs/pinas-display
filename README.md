@@ -4,13 +4,19 @@ PiNAS Display 是一个运行在 Linux 单板机上的 SPI 屏幕信息显示程
 
 ## 支持的板卡
 
-当前提供 `rpi5`、`rock5c`、`rock4d`、`rock2a` 配置，文件位于 `examples/config.<board>.py`。
+当前提供 `rpi5`、`rock5c`、`rock4d`、`rock2a`、`rpi5-nas` 配置，文件位于 `examples/config.<board>.py`。
 
 ## 安装
 
 ```bash
 cd pinas-display
 sudo bash ./install.sh -b rpi5
+```
+
+老的6盘位、4盘位RPi5-NAS  板子使用：
+
+```bash
+sudo bash ./install.sh -b rpi5-nas
 ```
 
 也可以使用 `sudo bash ./install.sh --board rock5c`。不指定板卡时默认使用 `rpi5`。脚本会选择对应配置并复制为根目录的 `config.py`，创建虚拟环境、安装依赖，将程序复制到 `/usr/local/pinas-display`，然后注册并启动 `spiled.service`。
