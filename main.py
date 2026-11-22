@@ -6,7 +6,9 @@ import time
 import st7789
 import psutil
 import os
-from config import DISPLAY_CONFIG, TITLE
+from pathlib import Path
+from config import DISPLAY_CONFIG, LANGUAGE
+from lang import languages
 
 
 ROW_POSITIONS = [0, 24, 46, 68, 90, 112]
@@ -18,6 +20,10 @@ COLOR_GREEN = (119, 255, 193)
 COLOR_PURPLE = (236, 97, 254)
 GRID_COLOR = (64, 64, 64)
 SUB_FONT_SIZE = 16
+
+CPU_TEMP_THERMAL_ZONES = ("cpu", "package", "soc", "center")
+
+locale = languages.get(LANGUAGE, languages["en"])
 
 shutdown_requested = False
 display = None
@@ -43,13 +49,16 @@ def get_hwmon_path(dev_name):
 
     return None
 
-cpu_hwmon_path = get_hwmon_path("cpu_thermal")
-if cpu_hwmon_path is None:
-    cpu_hwmon_path = get_hwmon_path("soc-thermal")
-if cpu_hwmon_path is None:
-    cpu_hwmon_path = get_hwmon_path("cpu-thermal")
-if cpu_hwmon_path is None:
-    cpu_hwmon_path = get_hwmon_path("soc_thermal")
+def get_cpu_temperature_file():
+    for zone in Path("/sys/class/thermal").glob("thermal_zone*"):
+        name = (zone / "type").read_text().strip().lower()
+
+        if any(key in name for key in CPU_TEMP_THERMAL_ZONES):
+            return zone / "temp"
+
+    return None
+
+cpu_thermal_zone_file = get_cpu_temperature_file()
 lm75_hwmon_path = get_hwmon_path("lm75")
 if lm75_hwmon_path is None:
     lm75_hwmon_path = get_hwmon_path("lm75b")
@@ -103,9 +112,9 @@ def draw_net(disp):
 
 
 def draw_temp(disp):
-    cpu_temp_file = os.path.join(cpu_hwmon_path, "temp1_input") if cpu_hwmon_path else None
-    if cpu_temp_file and os.path.exists(cpu_temp_file):
-        cpu_temp_str = format(get_temp(cpu_temp_file) / 1000, '.1f')
+
+    if cpu_thermal_zone_file:
+        cpu_temp_str = format(get_temp(cpu_thermal_zone_file) / 1000, '.1f')
     else:
         cpu_temp_str = "err"
 
@@ -165,19 +174,19 @@ def draw_background(disp):
     disp.line(GRID_POSITIONS[1], ROW_POSITIONS[1], GRID_POSITIONS[1], disp.height-1, color=GRID_COLOR)
     disp.line(0, ROW_POSITIONS[4], disp.width-1, ROW_POSITIONS[4], color=GRID_COLOR)
 
-    disp.text(TITLE, 0, 0, font_size=20, color=TITLE_FONT_COLOR)
+    disp.text(locale["title"], 0, 0, font_size=20, color=TITLE_FONT_COLOR)
 
-    disp.text("CPU", 0, ROW_POSITIONS[1]+3, font_size=SUB_FONT_SIZE, color=SUB_FONT_COLOR)
-    disp.text("内存", 0, ROW_POSITIONS[2]+3, font_size=SUB_FONT_SIZE, color=SUB_FONT_COLOR)
-    disp.text("温度", 0, ROW_POSITIONS[3]+3, font_size=SUB_FONT_SIZE, color=SUB_FONT_COLOR)
-    disp.text("CPU", GRID_POSITIONS[1]+4, ROW_POSITIONS[3]+3, font_size=SUB_FONT_SIZE, color=SUB_FONT_COLOR)
-    disp.text("背板", GRID_POSITIONS[2]+4, ROW_POSITIONS[3]+3, font_size=SUB_FONT_SIZE, color=SUB_FONT_COLOR)
+    disp.text(locale["cpu"], 0, ROW_POSITIONS[1]+3, font_size=SUB_FONT_SIZE, color=SUB_FONT_COLOR)
+    disp.text(locale["memory"], 0, ROW_POSITIONS[2]+3, font_size=SUB_FONT_SIZE, color=SUB_FONT_COLOR)
+    disp.text(locale["temperature"], 0, ROW_POSITIONS[3]+3, font_size=SUB_FONT_SIZE, color=SUB_FONT_COLOR)
+    disp.text(locale["temperature-cpu"], GRID_POSITIONS[1]+4, ROW_POSITIONS[3]+3, font_size=SUB_FONT_SIZE, color=SUB_FONT_COLOR)
+    disp.text(locale["temperature-board"], GRID_POSITIONS[2]+4, ROW_POSITIONS[3]+3, font_size=SUB_FONT_SIZE, color=SUB_FONT_COLOR)
 
-    disp.text("电源", 0, ROW_POSITIONS[4]+3, font_size=SUB_FONT_SIZE, color=SUB_FONT_COLOR)
-    disp.text("电压", GRID_POSITIONS[1]+4, ROW_POSITIONS[4]+3, font_size=SUB_FONT_SIZE, color=SUB_FONT_COLOR)
-    disp.text("功率", GRID_POSITIONS[2]+4, ROW_POSITIONS[4]+3, font_size=SUB_FONT_SIZE, color=SUB_FONT_COLOR)
+    disp.text(locale["power"], 0, ROW_POSITIONS[4]+3, font_size=SUB_FONT_SIZE, color=SUB_FONT_COLOR)
+    disp.text(locale["power-voltage"], GRID_POSITIONS[1]+4, ROW_POSITIONS[4]+3, font_size=SUB_FONT_SIZE, color=SUB_FONT_COLOR)
+    disp.text(locale["power-power"], GRID_POSITIONS[2]+4, ROW_POSITIONS[4]+3, font_size=SUB_FONT_SIZE, color=SUB_FONT_COLOR)
 
-    disp.text("网络", 0, ROW_POSITIONS[5]+3, font_size=SUB_FONT_SIZE, color=SUB_FONT_COLOR)
+    disp.text(locale["network"], 0, ROW_POSITIONS[5]+3, font_size=SUB_FONT_SIZE, color=SUB_FONT_COLOR)
 
 def handle_shutdown(signum, frame):
     """仅记录退出请求，避免在信号处理器中执行阻塞的 SPI 操作。"""

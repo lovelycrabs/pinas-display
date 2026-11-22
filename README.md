@@ -36,14 +36,16 @@ sudo /usr/local/pinas-display/venv/bin/python /usr/local/pinas-display/main.py
 
 ## 配置屏幕
 
-修改 `config.py` 中的标题和 SPI/GPIO 参数：
+修改 `/usr/local/pinas-display/config.py` 中的标题和 SPI/GPIO 参数：
 
 ```python
-TITLE = "欢迎使用PiNAS!"
-DISPLAY_CONFIG = {"port": 0, "cs": 0, "dc": 25, "rst": None, "backlight": None}
+LANGUAGE = "zh-cn"
+DISPLAY_CONFIG = {"port": 0, "cs": 0, "dc": (0, 25), "rst": None, "backlight": (0, 7)}
 ```
 
-GPIO 编号使用 Linux `gpiochip` 的 line offset，不一定等于开发板丝印上的物理引脚编号。修改后执行 `sudo systemctl restart spiled.service`。
+LANGUAGE是语言支持，zh-cn:简体中文、en:英文
+
+GPIO 使用 `(gpiochip 编号, line offset)` 配置，例如 `(0, 25)` 表示 `/dev/gpiochip0` 的 line offset 25。修改后执行 `sudo systemctl restart spiled.service`。
 
 ## 卸载
 

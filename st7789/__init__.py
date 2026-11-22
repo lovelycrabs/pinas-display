@@ -22,7 +22,6 @@ import numbers
 import time
 
 import gpiod
-import gpiodevice
 import spidev
 import freetype
 from pathlib import Path
@@ -145,8 +144,6 @@ class ST7789(object):
                 f"Invalid rotation {rotation} for {width}x{height} resolution"
             )
 
-        gpiodevice.friendly_errors = True
-
         self._spi = spidev.SpiDev(port, cs)
         self._spi.mode = 0
         self._spi.lsbfirst = False
@@ -163,23 +160,38 @@ class ST7789(object):
         self._offset_top = offset_top
 
         # Set DC as output.
-        self._dc = gpiodevice.get_pin(dc, "st7789-dc", OUTL)
+        self._dc = self._get_pin(dc, "st7789-dc", OUTL)
         self._bl = None
         self._rst = None
 
         # Setup backlight as output (if provided).
         if backlight is not None:
-            self._bl = gpiodevice.get_pin(backlight, "st7789-bl", OUTL)
+            self._bl = self._get_pin(backlight, "st7789-bl", OUTL)
             self.set_pin(self._bl, False)
             time.sleep(0.1)
             self.set_pin(self._bl, True)
 
         # Setup reset as output (if provided).
         if rst is not None:
-            self._rst = gpiodevice.get_pin(rst, "st7789-rst", OUTH)
+            self._rst = self._get_pin(rst, "st7789-rst", OUTH)
 
         self._init()
 
+    @staticmethod
+    def _get_pin(pin, consumer, settings):
+        """Request a GPIO using ``(gpiochip_number, line_offset)``."""
+        if not isinstance(pin, (tuple, list)) or len(pin) != 2:
+            raise ValueError(
+                f"{consumer} must be (gpiochip_number, line_offset), got {pin!r}"
+            )
+        chip_number, offset = pin
+        if not isinstance(chip_number, int) or chip_number < 0:
+            raise ValueError(f"Invalid gpiochip number: {chip_number!r}")
+        if not isinstance(offset, int) or offset < 0:
+            raise ValueError(f"Invalid GPIO line offset: {offset!r}")
+        chip = gpiod.Chip(f"/dev/gpiochip{chip_number}")
+        lines = chip.request_lines(consumer=consumer, config={offset: settings})
+        return lines, offset
     def set_pin(self, pin, state):
         lines, offset = pin
         lines.set_value(offset, Value.ACTIVE if state else Value.INACTIVE)

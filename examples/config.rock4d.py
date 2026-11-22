@@ -1,3 +1,5 @@
-TITLE = "欢迎使用PiNAS!"
+LANGUAGE = "zh-cn"
 # 根据实际接线修改对应板型的引脚。GPIO 编号使用 gpiochip 的 line offset。
-DISPLAY_CONFIG = {'port': 1, 'cs': 0, 'dc': 'PIN_22', 'rst': None, 'backlight': 'PIN_26', 'spi_speed_hz': 40 * 1000 * 1000}
+#dc GPIO2_D7
+#backlight GPIO1_C0
+DISPLAY_CONFIG = {'port': 1, 'cs': 0, 'dc': (2, 31), 'rst': None, 'backlight': (1, 16), 'spi_speed_hz': 40 * 1000 * 1000}
